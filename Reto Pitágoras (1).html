@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reto Pitágoras</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1b2333;--mut:#6b7488;--pri:#4f46e5;--ok:#16a34a;--bad:#dc2626;--ln:#dfe3ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10131c;--card:#1a1f2d;--tx:#eef1f8;--mut:#9aa3b8;--pri:#818cf8;--ok:#4ade80;--bad:#f87171;--ln:#2b3246}}
+:root[data-theme="dark"]{--bg:#10131c;--card:#1a1f2d;--tx:#eef1f8;--mut:#9aa3b8;--pri:#818cf8;--ok:#4ade80;--bad:#f87171;--ln:#2b3246}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:480px;padding:16px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:20px;padding:20px;margin-top:12px;text-align:center}
+h1{font-size:26px;margin:8px 0}
+p{color:var(--mut);line-height:1.5;margin:8px 0}
+.bar{height:10px;background:var(--ln);border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--pri);transition:width .3s}
+.top{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-bottom:8px}
+.tag{display:inline-block;background:var(--pri);color:#fff;border-radius:99px;padding:6px 14px;font-weight:600;font-size:14px}
+.eq{font-size:22px;font-weight:600;margin:10px 0}
+svg{width:100%;max-width:260px;height:auto}
+svg text{fill:var(--tx);font-size:18px;font-weight:700}
+svg .q{fill:var(--bad)}
+input{width:100%;font-size:24px;text-align:center;padding:14px;border-radius:14px;border:2px solid var(--ln);background:var(--bg);color:var(--tx);margin-top:8px}
+input:focus{outline:none;border-color:var(--pri)}
+button{width:100%;font-size:18px;font-weight:700;padding:16px;border:0;border-radius:14px;background:var(--pri);color:#fff;margin-top:12px;cursor:pointer}
+button:active{transform:scale(.98)}
+.fb{margin-top:12px;padding:12px;border-radius:12px;font-weight:600;text-align:left;line-height:1.5}
+.fb.ok{background:rgba(22,163,74,.15);color:var(--ok)}
+.fb.no{background:rgba(220,38,38,.15);color:var(--bad)}
+.big{font-size:56px;font-weight:800;color:var(--pri)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<div id="start" class="card">
+<h1>📐 Reto Pitágoras</h1>
+<p>20 ejercicios con el teorema de Pitágoras (exponente 2). Rotarás entre hallar la hipotenusa <b>C</b>, el cateto <b>A</b> y el cateto <b>B</b>.</p>
+<p><b>C² = A² + B²</b> · <b>A² = C² − B²</b> · <b>B² = C² − A²</b></p>
+<button onclick="begin()">Empezar</button>
+</div>
+
+<div id="game" class="hide">
+<div class="top"><span id="num">Ejercicio 1/20</span><span id="sc">⭐ 0</span></div>
+<div class="bar"><i id="pb"></i></div>
+<div class="card">
+<span class="tag" id="tag"></span>
+<div class="eq" id="rule"></div>
+<svg id="tri" viewBox="0 0 260 200"></svg>
+<input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Tu respuesta" autocomplete="off">
+<div id="fb"></div>
+<button id="btn" onclick="act()">Comprobar</button>
+</div>
+</div>
+
+<div id="end" class="card hide">
+<h1>¡Terminaste!</h1>
+<div class="big" id="fin"></div>
+<p id="msg"></p>
+<button onclick="begin()">Jugar otra vez</button>
+</div>
+</main>
+<script>
+const T=[[3,4,5],[5,12,13],[8,15,17],[7,24,25],[20,21,29],[6,8,10],[9,12,15],[12,16,20],[15,20,25],[9,40,41],[10,24,26],[12,35,37],[18,24,30],[21,28,35],[16,30,34],[24,32,40],[15,36,39],[11,60,61],[14,48,50],[27,36,45]];
+const K=['C','A','B'];
+let Q=[],i=0,score=0,checked=false,tries=0;
+const $=id=>document.getElementById(id);
+function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
+function begin(){
+  Q=shuffle(T).map((t,n)=>{let [a,b,c]=t;if(Math.random()<.5)[a,b]=[b,a];return{a,b,c,u:K[n%3]}});
+  i=0;score=0;
+  $('start').classList.add('hide');$('end').classList.add('hide');$('game').classList.remove('hide');
+  show();
+}
+function show(){
+  const q=Q[i];checked=false;tries=0;
+  $('num').textContent='Ejercicio '+(i+1)+'/20';
+  $('sc').textContent='⭐ '+score;
+  $('pb').style.width=(i/20*100)+'%';
+  $('tag').textContent='Halla '+(q.u==='C'?'la hipotenusa C':'el cateto '+q.u);
+  $('rule').textContent={C:'C² = A² + B²',A:'A² = C² − B²',B:'B² = C² − A²'}[q.u];
+  const v=k=>q.u===k?'?':q[k.toLowerCase()];
+  const c=k=>q.u===k?' class="q"':'';
+  $('tri').innerHTML=
+   '<polygon points="30,170 230,170 30,30" fill="none" stroke="currentColor" stroke-width="3" style="color:var(--pri)"/>'+
+   '<rect x="30" y="150" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--mut)"/>'+
+   '<text x="130" y="194" text-anchor="middle"'+c('A')+'>A = '+v('A')+'</text>'+
+   '<text x="22" y="105" text-anchor="end"'+c('B')+'>B = '+v('B')+'</text>'+
+   '<text x="150" y="88"'+c('C')+'>C = '+v('C')+'</text>';
+  $('ans').value='';$('ans').disabled=false;
+  $('fb').innerHTML='';$('btn').textContent='Comprobar';
+  setTimeout(()=>$('ans').focus(),50);
+}
+function act(){
+  const q=Q[i];
+  if(checked){
+    i++;
+    if(i>=20){finish();return}
+    show();return;
+  }
+  const val=$('ans').value.trim().replace(',','.');
+  if(val===''||isNaN(val)){$('ans').focus();return}
+  const r=q[q.u.toLowerCase()];
+  const n=Number(val);
+  if(n!==r){
+    tries++;
+    const d=Math.abs(n-r)/r;
+    const m=d<=.1?'🔥 ¡Muy cerca!':d<=.3?'👍 Vas cerca':d<=.6?'🤔 Todavía lejos':'🧊 Muy lejos';
+    const dir=n>r?'Te pasaste un poco 🔽':'Te faltó un poco 🔼';
+    $('fb').innerHTML='<div class="fb no">Sigue intentando 💪<br>'+m+'<br><small>'+dir+' · Intentos: '+tries+'</small></div>';
+    $('ans').select();$('ans').focus();
+    return;
+  }
+  checked=true;$('ans').disabled=true;
+  if(tries===0)score++;
+  const {a,b,c}=q;
+  const w={C:`C² = ${a}² + ${b}² = ${a*a} + ${b*b} = ${c*c} → C = ${c}`,
+           A:`A² = ${c}² − ${b}² = ${c*c} − ${b*b} = ${a*a} → A = ${a}`,
+           B:`B² = ${c}² − ${a}² = ${c*c} − ${a*a} = ${b*b} → B = ${b}`}[q.u];
+  $('fb').innerHTML='<div class="fb ok">✅ ¡Correcto!'+(tries===0?' ¡A la primera! ⭐':'')+'<br><small>'+w+'</small></div>';
+  $('sc').textContent='⭐ '+score;
+  $('btn').textContent=i===19?'Ver resultado':'Siguiente';
+}
+function finish(){
+  $('game').classList.add('hide');$('end').classList.remove('hide');
+  $('fin').textContent=score+'/20';
+  $('msg').textContent=score===20?'¡Perfecto! Eres un genio de Pitágoras 🏆':score>=15?'¡Muy bien! Casi lo dominas 💪':score>=10?'Buen intento, sigue practicando 📚':'Repasa las fórmulas e inténtalo de nuevo 🔁';
+}
+$('ans').addEventListener('keydown',e=>{if(e.key==='Enter')act()});
+</script>
+</body>
+</html>
